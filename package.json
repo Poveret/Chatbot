@@ -1,0 +1,22 @@
+{
+  "name": "chatbot",
+  "version": "1.0.0",
+  "description": "jjjj s dfdf d fa sdd asd a wsdwr asf r wr",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Poveret/Chatbot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Poveret/Chatbot/issues"
+  },
+  "homepage": "https://github.com/Poveret/Chatbot#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
