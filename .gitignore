@@ -1,3 +1,5 @@
 node_modules
 cliente/node_modules
 .env
+docker-volume
+public
