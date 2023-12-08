@@ -170,7 +170,7 @@ const Layout = () => {
         </div>
       </div>
       <div className="column">
-        <div className="chat-flex">
+        <div className={`chat-flex ${!visibleSidebar ? "chat-flex-hide" : ""}`}>
           <Outlet />
         </div>
       </div>

@@ -36,7 +36,6 @@ body,
 
 .chat-sidebar-hide {
   width: 50px !important;
-
 }
 
 .chat-sidebar-hide-button {
@@ -97,7 +96,15 @@ body,
   .chat-flex {
     margin-left: 10px;
     margin-top: 0px;
-    height: calc(100vh - 420px);
+    height: calc(100vh - 315px);
+  }
+  
+  .chat-flex-hide {
+    height: calc(100vh - 56px);
+  }
+
+  .chat-sidebar-hide {
+    height: 70px !important;
   }
 
   .chat-conversations {
@@ -110,14 +117,15 @@ body,
   }
 
   .chat-sidebar-hide-button {
-    visibility: hidden;
+    padding: 10px;
+    transform: rotate(90deg);
+  }
+  
+  .chat-sidebar-hide-button-right {
+    transform: rotate(-90deg);
   }
 
   .chat-sidebar-hide {
     width: 100% !important;
-  }
-
-  .chat-controls {
-    height: 50px;
   }
 }
