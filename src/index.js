@@ -186,12 +186,13 @@ mongoose
               if (body.error) {
                 res.json({ error: body.message });
               } else {
-                chat.messages.push(body.content);
+                formattedAnswer = body.content.replace(/AI##/g, "");
+                chat.messages.push(formattedAnswer);
 
                 chat
                   .save()
                   .then(() => {
-                    res.json({ content: body.content, uuid });
+                    res.json({ content: formattedAnswer, uuid });
                   })
                   .catch((err) => {
                     res.json({ error: "Error" });
