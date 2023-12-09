@@ -11,7 +11,7 @@ const Logout = () => {
   useCheckIfUserLogged(setIsUserLogged);
 
   useEffect(() => {
-    removeCookie("user_session");
+    removeCookie("user_session", "", { sameSite: true });
   }, [removeCookie]);
 
   if (isUserLogged === 0) {

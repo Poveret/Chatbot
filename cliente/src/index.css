@@ -29,6 +29,10 @@ body,
   color: #ccc;
 }
 
+.chat-menu-aside {
+  margin-right: -10px;
+}
+
 .chat-sidebar {
   max-width: 300px;
   transition: width 0.5s ease-out;
@@ -92,6 +96,19 @@ body,
   padding-bottom: 20px;
 }
 
+.chat-conversations li a {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.chat-conversation-selected {
+  background-color: #aaa;
+  color: #000;
+  border: 2px solid #fff;
+  border-radius: 2px;
+}
+
 @media (max-width: 768px) {
   .chat-flex {
     margin-left: 10px;
@@ -127,5 +144,9 @@ body,
 
   .chat-sidebar-hide {
     width: 100% !important;
+  }
+
+  .chat-menu-aside {
+    margin-right: 0px;
   }
 }

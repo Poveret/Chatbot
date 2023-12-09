@@ -6,16 +6,20 @@ import {
   useCheckIfUserLogged,
 } from "../../utils.js";
 import { toast } from "react-toastify";
+import { useCookies } from "react-cookie";
 
 const Home = () => {
   const [isUserLogged, setIsUserLogged] = useState(0);
   useCheckIfUserLogged(setIsUserLogged);
 
-  const [elements, setElements] = useState([]);
+  const [chatMessages, setChatMessages] = useState([]);
   const [question, setQuestion] = useState("");
   const formRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const [chatSelected, setChatSelected] = useState("");
+
+  const [cookies] = useCookies(["user_session"]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -26,7 +30,61 @@ const Home = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [elements]);
+  }, [chatMessages]);
+
+  const loadChatMessages = async (event) => {
+    if (event.uuid) {
+      let response = await fetch(apiUrl(`/getChat/${event.uuid}`), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_session: cookies.user_session,
+        }),
+      });
+
+      if (response.ok) {
+        const message = await response.json();
+
+        if (message.error) {
+          toast.error(message.error, toastDefaultSettings);
+        } else {
+          setChatSelected(message.chats.uuid);
+          setChatMessages([]);
+
+          setTimeout(async () => {
+            const newElements = message.chats.messages.map((question) => (
+              <div className="chat-message chat-message-initial-state">
+                {question}
+              </div>
+            ));
+
+            for (const element of newElements) {
+              setChatMessages((prev) => [...prev, element]);
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+          }, 100);
+        }
+      } else {
+        toast.error(
+          "No se ha podido conectar con el servidor",
+          toastDefaultSettings
+        );
+      }
+    } else {
+      setChatSelected("");
+      setChatMessages([]);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("chatsLoad", loadChatMessages);
+
+    return () => {
+      window.removeEventListener("chatsLoad", loadChatMessages);
+    };
+  }, []);
 
   const askSubmit = async (event) => {
     event.preventDefault();
@@ -34,10 +92,14 @@ const Home = () => {
     const formData = new FormData(formRef.current);
     const question = formData.get("question");
 
+    if (!question) {
+      return;
+    }
+
     const newElement = (
       <div className="chat-message chat-message-initial-state">{question}</div>
     );
-    setElements([...elements, newElement]);
+    setChatMessages([...chatMessages, newElement]);
     setQuestion("");
 
     setIsLoading(true);
@@ -46,7 +108,11 @@ const Home = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({
+        question,
+        uuid: chatSelected,
+        user_session: cookies.user_session,
+      }),
     });
 
     const message = await response.json();
@@ -56,42 +122,45 @@ const Home = () => {
       toast.error(message.error, toastDefaultSettings);
     } else {
       const content = message.content;
+      const chat_uuid = message.uuid;
+      setChatSelected(chat_uuid);
+
+      let chatsListEvent = new Event("chatsList");
+      chatsListEvent.newChat = [chat_uuid];
+      window.dispatchEvent(chatsListEvent);
 
       const responseElement = (
         <div className="chat-message chat-message-initial-state">{content}</div>
       );
 
-      setElements([...elements, newElement, responseElement]);
-      setQuestion("");
+      setChatMessages([...chatMessages, newElement, responseElement]);
     }
   };
 
   const handleKeyDown = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !isLoading) {
       event.preventDefault();
       askSubmit(event);
     }
   };
 
   useEffect(() => {
-    if (elements.length > 0) {
+    if (chatMessages.length > 0) {
       const timer = setTimeout(() => {
         const lastElement = document.querySelectorAll(
           ".chat-message-initial-state"
         );
         if (lastElement.length > 0) {
-          lastElement[lastElement.length - 1].classList.remove(
-            "chat-message-initial-state"
-          );
-          lastElement[lastElement.length - 1].classList.add(
-            "chat-message-final-state"
-          );
+          lastElement.forEach((element) => {
+            element.classList.remove("chat-message-initial-state");
+            element.classList.add("chat-message-final-state");
+          });
         }
       }, 50);
 
       return () => clearTimeout(timer);
     }
-  }, [elements]);
+  }, [chatMessages]);
 
   if (isUserLogged === 2) {
     return (
@@ -120,7 +189,7 @@ const Home = () => {
   return (
     <>
       <div className="chat-child chat-messages">
-        {elements.map((element, index) => (
+        {chatMessages.map((element, index) => (
           <React.Fragment key={index}>{element}</React.Fragment>
         ))}
         {isLoading && (

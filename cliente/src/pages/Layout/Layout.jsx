@@ -1,9 +1,13 @@
 import { Outlet, Link } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import { useState } from "react";
-import { useCheckIfUserLogged } from "../../utils";
+import { toast, ToastContainer } from "react-toastify";
+import { useEffect, useState } from "react";
+import { useCookies } from "react-cookie";
+import { useCheckIfUserLogged, apiUrl } from "../../utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeftLong } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowLeftLong,
+  faPlusCircle,
+} from "@fortawesome/free-solid-svg-icons";
 import "react-toastify/dist/ReactToastify.css";
 
 const Layout = () => {
@@ -11,6 +15,66 @@ const Layout = () => {
   useCheckIfUserLogged(setIsUserLogged);
 
   const [visibleSidebar, setVisibleSidebar] = useState(true);
+  const [selectedChat, setSelectedChat] = useState("");
+  const [chatsList, setChatList] = useState([]);
+  const [cookies] = useCookies(["user_session"]);
+
+  const updateChatsList = (event) => {
+    const newChat = event.newChat;
+
+    setChatList((prevChatsList) => {
+      if (newChat.length === 1 && !prevChatsList.includes(newChat[0])) {
+        return [...prevChatsList, ...newChat];
+      } else if (newChat.length === 1 && prevChatsList.includes(newChat[0])) {
+        return [...prevChatsList];
+      } else {
+        return [...newChat];
+      }
+    });
+  };
+
+  useEffect(() => {
+    window.addEventListener("chatsList", updateChatsList);
+
+    return () => {
+      window.removeEventListener("chatsList", updateChatsList);
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      if (isUserLogged === 1) {
+        let response = await fetch(apiUrl("/getChats"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_session: cookies.user_session,
+          }),
+        });
+
+        if (response.ok) {
+          const message = await response.json();
+
+          if (message.error) {
+            toast.error(message.error, toastDefaultSettings);
+          } else {
+            let chatsListEvent = new Event("chatsList");
+            chatsListEvent.newChat = message.chats;
+            window.dispatchEvent(chatsListEvent);
+          }
+        } else {
+          toast.error(
+            "No se ha podido conectar con el servidor",
+            toastDefaultSettings
+          );
+        }
+      }
+    };
+
+    fetchChats();
+  }, [isUserLogged]);
 
   return (
     <div className="columns">
@@ -43,7 +107,7 @@ const Layout = () => {
           style={{ visibility: visibleSidebar ? "visible" : "hidden" }}
           key={isUserLogged}
         >
-          <aside className="menu">
+          <aside className="menu chat-menu-aside">
             <p className="menu-label">General</p>
             <ul className="menu-list">
               <li>
@@ -71,98 +135,46 @@ const Layout = () => {
             </ul>
             {isUserLogged === 1 ? (
               <>
-                <p className="menu-label">Conversaciones</p>
+                <p className="menu-label">
+                  Conversaciones
+                  <FontAwesomeIcon
+                    style={{
+                      float: "right",
+                      cursor: "pointer",
+                      fontSize: "20px",
+                      color: "#fff",
+                    }}
+                    icon={faPlusCircle}
+                    onClick={() => {
+                      const event = new Event("chatsLoad");
+                      event.uuid = "";
+                      window.dispatchEvent(event);
+                      setSelectedChat("");
+                    }}
+                  />
+                </p>
                 <ul className="menu-list chat-conversations">
-                  <li>
-                    <a>Chat 1</a>
-                  </li>
-                  <li>
-                    <a>Chat 2</a>
-                  </li>
-                  <li>
-                    <a>Chat 3</a>
-                  </li>
-                  <li>
-                    <a>Chat 4</a>
-                  </li>
-                  <li>
-                    <a>Chat 5</a>
-                  </li>
-                  <li>
-                    <a>Chat 6</a>
-                  </li>
-                  <li>
-                    <a>Chat 7</a>
-                  </li>
-                  <li>
-                    <a>Chat 8</a>
-                  </li>
-                  <li>
-                    <a>Chat 9</a>
-                  </li>
-                  <li>
-                    <a>Chat 10</a>
-                  </li>
-                  <li>
-                    <a>Chat 11</a>
-                  </li>
-                  <li>
-                    <a>Chat 12</a>
-                  </li>
-                  <li>
-                    <a>Chat 13</a>
-                  </li>
-                  <li>
-                    <a>Chat 14</a>
-                  </li>
-                  <li>
-                    <a>Chat 15</a>
-                  </li>
-                  <li>
-                    <a>Chat 16</a>
-                  </li>
-                  <li>
-                    <a>Chat 17</a>
-                  </li>
-                  <li>
-                    <a>Chat 18</a>
-                  </li>
-                  <li>
-                    <a>Chat 19</a>
-                  </li>
-                  <li>
-                    <a>Chat 20</a>
-                  </li>
-                  <li>
-                    <a>Chat 21</a>
-                  </li>
-                  <li>
-                    <a>Chat 22</a>
-                  </li>
-                  <li>
-                    <a>Chat 23</a>
-                  </li>
-                  <li>
-                    <a>Chat 24</a>
-                  </li>
-                  <li>
-                    <a>Chat 25</a>
-                  </li>
-                  <li>
-                    <a>Chat 26</a>
-                  </li>
-                  <li>
-                    <a>Chat 27</a>
-                  </li>
-                  <li>
-                    <a>Chat 28</a>
-                  </li>
-                  <li>
-                    <a>Chat 29</a>
-                  </li>
-                  <li>
-                    <a>Chat 30</a>
-                  </li>
+                  {chatsList.map((element) => (
+                    <li
+                      className={
+                        element === selectedChat
+                          ? "chat-conversation-selected"
+                          : ""
+                      }
+                      key={element}
+                    >
+                      <a
+                        onClick={() => {
+                          const event = new Event("chatsLoad");
+                          event.uuid = element;
+                          window.dispatchEvent(event);
+                          setSelectedChat(element);
+                        }}
+                      >
+                        {element}
+                      </a>
+                    </li>
+                  ))}
                 </ul>
               </>
             ) : null}

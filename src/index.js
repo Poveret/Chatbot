@@ -6,6 +6,10 @@ const crypto = require("crypto");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 
+const User = require("./schemas/user.schema.js");
+const Chat = require("./schemas/chats.schema.js");
+require("dotenv").config();
+
 const generateAccessToken = (username) => {
   return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: "30 days" });
 };
@@ -21,13 +25,6 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-const User = require("./schemas/user.schema.js");
-
-require("dotenv").config();
-
-const app = express();
-const port = 3000;
-
 mongoose
   .connect(
     `mongodb://${process.env.DBUSER}:${process.env.DBPASSWORD}@${
@@ -39,6 +36,9 @@ mongoose
   )
   .then(() => {
     console.log("Conectado a la base de datos");
+
+    const app = express();
+    const port = 3000;
 
     app.use(express.urlencoded({ extended: true }));
     app.use(express.json());
@@ -99,6 +99,7 @@ mongoose
           .update(req.body.password)
           .digest("hex"),
       });
+
       if (!user) {
         res.json({ error: "Usuario o contraseña incorrectos" });
         return;
@@ -108,7 +109,15 @@ mongoose
         username: req.body.username + user.password,
       });
 
-      res.json({ session_token: token });
+      user.session_token = token;
+
+      user.save().catch((err) => {
+        console.log("Error actualizando token de usuario: " + err);
+      });
+
+      const chats = await Chat.find({ user: user._id });
+
+      res.json({ session_token: token, chats: chats.map((x) => x.uuid) });
     });
 
     app.post("/api/islogged", authenticateToken, (req, res) => {
@@ -116,40 +125,133 @@ mongoose
     });
 
     app.post("/api/question", async (req, res) => {
-      const { question } = req.body;
+      const { question, user_session } = req.body;
+      let { uuid } = req.body;
 
-      request(
-        {
-          method: "POST",
-          url: process.env.URL_AI,
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-KEY": process.env.API_KEY,
-          },
-          body: {
-            model: "gpt-35-turbo-0301",
-            uuid: "aasdasdsad", // uuidv4()
-            message: { role: "user", content: question },
-            index: "",
-            type: "",
-            temperature: 0,
-            origin: "escueladata",
-            plugin_id: "",
-            prompt_externo: "",
-            tokens: 3000,
-            folder: "root",
-          },
-          json: true,
-        },
-        (error, response, body) => {
-          if (error) throw new Error(error);
-          if (body.error) {
-            res.json({ error: body.message });
-          } else {
-            res.json({ content: body.content });
+      if (!user_session) {
+        res.json({ error: "Error" });
+      } else {
+        try {
+          const user = await User.findOne({
+            session_token: user_session,
+          });
+
+          if (!user) {
+            res.json({ error: "Error usuario no reconocido" });
           }
+
+          let chat;
+
+          if (!uuid) {
+            uuid = uuidv4();
+            chat = new Chat({
+              uuid,
+              date: new Date(),
+              user: user._id,
+              messages: [],
+            });
+          } else {
+            chat = await Chat.findOne({
+              uuid,
+            });
+          }
+
+          chat.messages.push(question);
+
+          request(
+            {
+              method: "POST",
+              url: process.env.URL_AI,
+              headers: {
+                "Content-Type": "application/json",
+                "X-API-KEY": process.env.API_KEY,
+              },
+              body: {
+                model: "gpt-35-turbo-0301",
+                uuid,
+                message: { role: "user", content: question },
+                index: "",
+                type: "",
+                temperature: 0,
+                origin: "escueladata",
+                plugin_id: "",
+                prompt_externo: "",
+                tokens: 3000,
+                folder: "root",
+              },
+              json: true,
+            },
+            (error, response, body) => {
+              if (error) throw new Error(error);
+              if (body.error) {
+                res.json({ error: body.message });
+              } else {
+                chat.messages.push(body.content);
+
+                chat
+                  .save()
+                  .then(() => {
+                    res.json({ content: body.content, uuid });
+                  })
+                  .catch((err) => {
+                    res.json({ error: "Error" });
+                  });
+              }
+            }
+          );
+        } catch {
+          res.json({ error: "Error" });
         }
-      );
+      }
+    });
+
+    app.post("/api/getChats", async (req, res) => {
+      const { user_session } = req.body;
+
+      if (!user_session) {
+        res.json({ error: "No hay sesión de usuario" });
+        return;
+      }
+
+      const user = await User.findOne({
+        session_token: user_session,
+      });
+
+      if (!user) {
+        res.json({ error: "Error al cargar el usuario" });
+        return;
+      }
+
+      const chats = await Chat.find({
+        user: user._id,
+      });
+
+      res.json({ chats: chats.map((x) => x.uuid) });
+    });
+
+    app.post("/api/getChat/:uuid", async (req, res) => {
+      const { user_session } = req.body;
+
+      if (!user_session) {
+        res.json({ error: "No hay sesión de usuario" });
+        return;
+      }
+
+      const user = await User.findOne({
+        session_token: user_session,
+      });
+
+      if (!user) {
+        res.json({ error: "Error al cargar el usuario" });
+        return;
+      }
+
+      const chats = await Chat.findOne({
+        user: user._id,
+        uuid: req.params.uuid,
+      });
+
+      res.json({ chats });
     });
 
     app.get("*", (req, res) => {
