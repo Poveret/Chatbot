@@ -2,7 +2,11 @@ import { Outlet, Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
-import { useCheckIfUserLogged, apiUrl } from "../../utils";
+import {
+  useCheckIfUserLogged,
+  apiUrl,
+  toastDefaultSettings,
+} from "../../utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeftLong,
@@ -144,7 +148,11 @@ const Layout = () => {
                   Conversaciones
                   <FontAwesomeIcon
                     className="chat-menu-buttons"
-                    style={{ marginLeft: "auto", paddingRight: "10px" }}
+                    style={{
+                      marginLeft: "auto",
+                      paddingRight: "10px",
+                      visibility: selectedChat ? "visible" : "hidden",
+                    }}
                     icon={faTrashCan}
                     onClick={async () => {
                       if (isUserLogged === 1) {
