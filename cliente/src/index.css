@@ -27,10 +27,23 @@ body,
 
 .chat-navbar .menu-label {
   color: #ccc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.chat-menu-aside {
-  margin-right: -10px;
+.chat-menu-buttons {
+  cursor: pointer;
+  font-size: 20px;
+  color: #fff;
+}
+
+.chat-menu-buttons:hover {
+  color: #ccc;
+}
+
+.chat-menu-button-add {
+  margin-right: -15px;
 }
 
 .chat-sidebar {
@@ -46,6 +59,10 @@ body,
   cursor: pointer;
   margin-top: 10px;
   transition: transform 0.5s ease-in;
+}
+
+.chat-sidebar-hide-button:hover {
+  color: #ccc;
 }
 
 .chat-sidebar-hide-button-right {
@@ -117,7 +134,7 @@ body,
   }
   
   .chat-flex-hide {
-    height: calc(100vh - 56px);
+    height: calc(100vh - 54px);
   }
 
   .chat-sidebar-hide {
@@ -146,7 +163,7 @@ body,
     width: 100% !important;
   }
 
-  .chat-menu-aside {
+  .chat-menu-button-add {
     margin-right: 0px;
   }
 }

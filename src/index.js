@@ -254,6 +254,38 @@ mongoose
       res.json({ chats });
     });
 
+    app.delete("/api/getChat/:uuid", async (req, res) => {
+      const { user_session } = req.body;
+
+      if (!user_session) {
+        res.json({ error: "No hay sesión de usuario" });
+        return;
+      }
+
+      const user = await User.findOne({
+        session_token: user_session,
+      });
+
+      if (!user) {
+        res.json({ error: "Error al cargar el usuario" });
+        return;
+      }
+
+      const chats = await Chat.findOne({
+        user: user._id,
+        uuid: req.params.uuid,
+      });
+
+      chats
+        .deleteOne()
+        .then(() => {
+          res.json({ message: "Eliminado" });
+        })
+        .catch((error) => {
+          res.json({ error });
+        });
+    });
+
     app.get("*", (req, res) => {
       res.sendFile(path.join(__dirname, "..", "public", "index.html"));
     });

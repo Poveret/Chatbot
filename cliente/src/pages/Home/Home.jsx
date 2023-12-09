@@ -127,6 +127,7 @@ const Home = () => {
 
       let chatsListEvent = new Event("chatsList");
       chatsListEvent.newChat = [chat_uuid];
+      chatsListEvent.setChat = chat_uuid;
       window.dispatchEvent(chatsListEvent);
 
       const responseElement = (

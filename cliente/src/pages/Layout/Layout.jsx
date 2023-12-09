@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeftLong,
   faPlusCircle,
+  faTrashCan,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -21,6 +22,10 @@ const Layout = () => {
 
   const updateChatsList = (event) => {
     const newChat = event.newChat;
+
+    if (event.setChat) {
+      setSelectedChat(event.setChat);
+    }
 
     setChatList((prevChatsList) => {
       if (newChat.length === 1 && !prevChatsList.includes(newChat[0])) {
@@ -138,12 +143,52 @@ const Layout = () => {
                 <p className="menu-label">
                   Conversaciones
                   <FontAwesomeIcon
-                    style={{
-                      float: "right",
-                      cursor: "pointer",
-                      fontSize: "20px",
-                      color: "#fff",
+                    className="chat-menu-buttons"
+                    style={{ marginLeft: "auto", paddingRight: "10px" }}
+                    icon={faTrashCan}
+                    onClick={async () => {
+                      if (isUserLogged === 1) {
+                        let response = await fetch(
+                          apiUrl(`/getChat/${selectedChat}`),
+                          {
+                            method: "DELETE",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                              user_session: cookies.user_session,
+                            }),
+                          }
+                        );
+
+                        if (response.ok) {
+                          const message = await response.json();
+
+                          if (message.error) {
+                            toast.error(message.error, toastDefaultSettings);
+                          } else {
+                            const event = new Event("chatsLoad");
+                            event.uuid = "";
+                            window.dispatchEvent(event);
+                            setSelectedChat("");
+
+                            setChatList((prevChatsList) => {
+                              return prevChatsList.filter(
+                                (chat) => chat !== selectedChat
+                              );
+                            });
+                          }
+                        } else {
+                          toast.error(
+                            "No se ha podido conectar con el servidor",
+                            toastDefaultSettings
+                          );
+                        }
+                      }
                     }}
+                  />
+                  <FontAwesomeIcon
+                    className="chat-menu-buttons chat-menu-button-add"
                     icon={faPlusCircle}
                     onClick={() => {
                       const event = new Event("chatsLoad");
