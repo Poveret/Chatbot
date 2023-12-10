@@ -18,6 +18,8 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const [chatSelected, setChatSelected] = useState("");
+  const timeoutIdRef = useRef(null);
+  const internalTimeoutIdsRef = useRef([]);
 
   const [cookies] = useCookies(["user_session"]);
 
@@ -33,6 +35,13 @@ const Home = () => {
   }, [chatMessages]);
 
   const loadChatMessages = async (event) => {
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+    }
+
+    internalTimeoutIdsRef.current.forEach(clearTimeout);
+    internalTimeoutIdsRef.current = [];
+
     if (event.uuid) {
       let response = await fetch(apiUrl(`/getChat/${event.uuid}`), {
         method: "POST",
@@ -53,7 +62,7 @@ const Home = () => {
           setChatSelected(message.chats.uuid);
           setChatMessages([]);
 
-          setTimeout(async () => {
+          timeoutIdRef.current = setTimeout(async () => {
             const newElements = message.chats.messages.map((question) => (
               <div className="chat-message chat-message-initial-state">
                 {question}
@@ -62,7 +71,9 @@ const Home = () => {
 
             for (const element of newElements) {
               setChatMessages((prev) => [...prev, element]);
-              await new Promise((resolve) => setTimeout(resolve, 100));
+              await new Promise((resolve) => {
+                internalTimeoutIdsRef.current.push(setTimeout(resolve, 100));
+              });
             }
           }, 100);
         }
