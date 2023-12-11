@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "deploy": "rm -rf ./public/* 2>/dev/null && cd ./cliente && npm run build && cd ../ && mkdir -p ./public && mv ./cliente/dist/* ./public && docker compose build --no-cache"
+    "deploy": "rm -rf ./public/* 2>/dev/null && cd ./cliente && npm install && npm run build && cd ../ && mkdir -p ./public && mv ./cliente/dist/* ./public && docker compose build --no-cache"
   },
   "repository": {
     "type": "git",
