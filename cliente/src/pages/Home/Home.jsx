@@ -73,7 +73,7 @@ const Home = () => {
         if (message.error) {
           toast.error(message.error, toastDefaultSettings);
         } else {
-          setChatSelected(message.chats.uuid);
+          setChatSelected(message.uuid);
           setChatMessages([]);
 
           timeoutIdRef.current = setTimeout(async () => {
@@ -84,7 +84,7 @@ const Home = () => {
             );
             setChatMessages([firstMessageElement]);
 
-            const newElements = message.chats.messages.map((message) => (
+            const newElements = message.messages.map((message) => (
               <div className="chat-message chat-message-initial-state">
                 {parse(message)}
               </div>
@@ -168,7 +168,9 @@ const Home = () => {
       window.dispatchEvent(chatsListEvent);
 
       const responseElement = (
-        <div className="chat-message chat-message-initial-state">{content}</div>
+        <div className="chat-message chat-message-initial-state">
+          {parse(content)}
+        </div>
       );
 
       setChatMessages([...chatMessages, newElement, responseElement]);

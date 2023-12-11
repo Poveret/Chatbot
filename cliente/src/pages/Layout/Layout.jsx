@@ -185,7 +185,7 @@ const Layout = () => {
 
                             setChatList((prevChatsList) => {
                               return prevChatsList.filter(
-                                (chat) => chat !== selectedChat
+                                (chat) => chat.uuid !== selectedChat
                               );
                             });
                           }
@@ -220,6 +220,7 @@ const Layout = () => {
                       key={element.uuid}
                     >
                       <a
+                        title={element.summary}
                         onClick={() => {
                           const event = new Event("chatsLoad");
                           event.uuid = element.uuid;

@@ -273,7 +273,6 @@ mongoose
                     summary = question.split(" ").slice(0, 4);
                     summary = summary.join(" ");
                   }
-                  console.log(tagsArray.length);
 
                   chat = new Chat({
                     uuid,
@@ -415,12 +414,12 @@ mongoose
         return;
       }
 
-      const chats = await Chat.findOne({
+      const chat = await Chat.findOne({
         user: user._id,
         uuid: req.params.uuid,
       });
 
-      res.json({ chats });
+      res.json(chat);
     });
 
     app.delete("/api/getChat/:uuid", async (req, res) => {
