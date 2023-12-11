@@ -19,7 +19,14 @@ const Home = () => {
   const [isUserLogged, setIsUserLogged] = useState(0);
   useCheckIfUserLogged(setIsUserLogged);
 
-  const [chatMessages, setChatMessages] = useState([]);
+  const firstMessageElement = (
+    <div className="chat-message chat-message-initial-state">
+      {FIRST_MESSAGE}
+    </div>
+  );
+
+  const [chatMessages, setChatMessages] = useState([firstMessageElement]);
+
   const [question, setQuestion] = useState("");
   const formRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
