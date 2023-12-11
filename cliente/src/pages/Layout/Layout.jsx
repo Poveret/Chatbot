@@ -1,4 +1,4 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
@@ -23,6 +23,8 @@ const Layout = () => {
   const [selectedChat, setSelectedChat] = useState("");
   const [chatsList, setChatList] = useState([]);
   const [cookies] = useCookies(["user_session"]);
+
+  const location = useLocation();
 
   const updateChatsList = (event) => {
     const newChat = event.newChat;
@@ -123,7 +125,16 @@ const Layout = () => {
             <p className="menu-label">General</p>
             <ul className="menu-list">
               <li>
-                <Link to="/">Inicio</Link>
+                <Link
+                  to="/"
+                  onClick={() => {
+                    if (location.pathname !== "/") {
+                      setSelectedChat("");
+                    }
+                  }}
+                >
+                  Inicio
+                </Link>
               </li>
               {isUserLogged === 1 ? (
                 <>
@@ -145,7 +156,7 @@ const Layout = () => {
                 </>
               ) : null}
             </ul>
-            {isUserLogged === 1 ? (
+            {isUserLogged === 1 && location.pathname === "/" ? (
               <>
                 <p className="menu-label">
                   Conversaciones
