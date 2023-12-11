@@ -7,6 +7,7 @@ import {
 } from "../../utils.js";
 import { toast } from "react-toastify";
 import { useCookies } from "react-cookie";
+import parse from "html-react-parser";
 
 const Home = () => {
   const [isUserLogged, setIsUserLogged] = useState(0);
@@ -63,9 +64,9 @@ const Home = () => {
           setChatMessages([]);
 
           timeoutIdRef.current = setTimeout(async () => {
-            const newElements = message.chats.messages.map((question) => (
+            const newElements = message.chats.messages.map((message) => (
               <div className="chat-message chat-message-initial-state">
-                {question}
+                {parse(message)}
               </div>
             ));
 
@@ -201,8 +202,8 @@ const Home = () => {
   return (
     <>
       <div className="chat-child chat-messages">
-        {chatMessages.map((element, index) => (
-          <React.Fragment key={index}>{element}</React.Fragment>
+        {chatMessages.map((message, index) => (
+          <React.Fragment key={index}>{message}</React.Fragment>
         ))}
         {isLoading && (
           <progress className="progress is-small is-info" max="100" />
