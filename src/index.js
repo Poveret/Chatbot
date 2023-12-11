@@ -186,16 +186,10 @@ mongoose
 
           if (!uuid) {
             uuid = uuidv4();
-            chat = new Chat({
-              uuid,
-              date: new Date(),
-              user: user._id,
-              messages: [],
-            });
 
             const prompt =
-              "Desarrolla una IA que actúe como nutricionista virtual y proporcione planes de alimentación personalizados a los usuarios. " +
-              "La IA debe ser capaz de recopilar información sobre la edad, el género, la altura, el peso, el nivel de actividad física " +
+              "Actúa como nutricionista virtual y proporcione planes de alimentación personalizados a los usuarios. " +
+              "Debes ser capaz de recopilar información sobre la edad, el género, la altura, el peso, el nivel de actividad física " +
               "y los objetivos de cada usuario. A partir de esta información, la IA debe ser capaz de calcular las necesidades calóricas diarias de cada usuario " +
               "y diseñar un plan de alimentación equilibrado que incluya los nutrientes necesarios para alcanzar sus objetivos. " +
               "La IA debe ser capaz de proporcionar opciones de alimentos saludables y sugerencias de recetas para cada comida del día, " +
@@ -203,7 +197,10 @@ mongoose
               "Además, la IA debe ser capaz de realizar un seguimiento del progreso de cada usuario y ajustar el plan de alimentación según sea necesario " +
               "para garantizar que se alcancen los objetivos de manera segura y efectiva." +
               "Si das una receta, pon al lado de cada ingrediente las calorías que corresponden." +
-              (user.imc ? `Mi índice de masa corporal es de ${user.imc}` : "");
+              (user.imc
+                ? ` El índice de masa corporal del usuario que pregunta es de ${user.imc}.`
+                : "") +
+              " Puedes utilizar formato html para que se vea mejor";
 
             const firstPrompt = new Promise((resolve, reject) =>
               request(
@@ -236,6 +233,62 @@ mongoose
             );
 
             await firstPrompt;
+
+            const summary = new Promise((resolve, reject) =>
+              request(
+                {
+                  method: "POST",
+                  url: process.env.URL_AI,
+                  headers: {
+                    "Content-Type": "application/json",
+                    "X-API-KEY": process.env.API_KEY,
+                  },
+                  body: {
+                    model: "gpt-35-turbo-0301",
+                    uuid: uuid + "x",
+                    message: {
+                      role: "user",
+                      content:
+                        "Hazme un resumen de no mas de 5 palabras de este texto, elige solo palabras claves, el formato será @palabra1#palabra2#palabra3..., este es el texto: " +
+                        question,
+                    },
+                    index: "",
+                    type: "",
+                    temperature: 0,
+                    origin: "escueladata",
+                    plugin_id: "",
+                    prompt_externo: "",
+                    tokens: 3000,
+                    folder: "root",
+                  },
+                  json: true,
+                },
+                (error, response, body) => {
+                  let input = body.content.replace(/AI##/g, "");
+                  const tagsString = input.substring(input.indexOf("@") + 1);
+                  const tagsArray = tagsString.split("#");
+                  let summary = tagsArray.join(" ");
+
+                  if (tagsArray.length <= 1) {
+                    summary = question.split(" ").slice(0, 4);
+                    summary = summary.join(" ");
+                  }
+                  console.log(tagsArray.length);
+
+                  chat = new Chat({
+                    uuid,
+                    date: new Date(),
+                    user: user._id,
+                    summary,
+                    messages: [],
+                  });
+
+                  resolve();
+                }
+              )
+            );
+
+            await summary;
           } else {
             chat = await Chat.findOne({
               uuid,
@@ -278,7 +331,11 @@ mongoose
                 chat
                   .save()
                   .then(() => {
-                    res.json({ content: formattedAnswer, uuid });
+                    res.json({
+                      content: formattedAnswer,
+                      uuid,
+                      summary: chat.summary,
+                    });
                   })
                   .catch((err) => {
                     res.json({ error: "Error" });
@@ -313,7 +370,12 @@ mongoose
         user: user._id,
       });
 
-      res.json({ chats: chats.map((x) => x.uuid) });
+      res.json(
+        chats.map((x) => ({
+          uuid: x.uuid,
+          summary: x.summary,
+        }))
+      );
     });
 
     app.post("/api/user", async (req, res) => {

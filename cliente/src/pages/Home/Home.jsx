@@ -163,7 +163,7 @@ const Home = () => {
       setChatSelected(chat_uuid);
 
       let chatsListEvent = new Event("chatsList");
-      chatsListEvent.newChat = [chat_uuid];
+      chatsListEvent.newChat = [{ uuid: chat_uuid, summary: message.summary }];
       chatsListEvent.setChat = chat_uuid;
       window.dispatchEvent(chatsListEvent);
 

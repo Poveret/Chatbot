@@ -32,9 +32,12 @@ const Layout = () => {
     }
 
     setChatList((prevChatsList) => {
-      if (newChat.length === 1 && !prevChatsList.includes(newChat[0])) {
+      if (newChat.length === 1 && !prevChatsList.includes(newChat[0].uuid)) {
         return [...prevChatsList, ...newChat];
-      } else if (newChat.length === 1 && prevChatsList.includes(newChat[0])) {
+      } else if (
+        newChat.length === 1 &&
+        prevChatsList.includes(newChat[0].uuid)
+      ) {
         return [...prevChatsList];
       } else {
         return [...newChat];
@@ -70,7 +73,7 @@ const Layout = () => {
             toast.error(message.error, toastDefaultSettings);
           } else {
             let chatsListEvent = new Event("chatsList");
-            chatsListEvent.newChat = message.chats;
+            chatsListEvent.newChat = message;
             window.dispatchEvent(chatsListEvent);
           }
         } else {
@@ -210,21 +213,21 @@ const Layout = () => {
                   {chatsList.map((element) => (
                     <li
                       className={
-                        element === selectedChat
+                        element.uuid === selectedChat
                           ? "chat-conversation-selected"
                           : ""
                       }
-                      key={element}
+                      key={element.uuid}
                     >
                       <a
                         onClick={() => {
                           const event = new Event("chatsLoad");
-                          event.uuid = element;
+                          event.uuid = element.uuid;
                           window.dispatchEvent(event);
-                          setSelectedChat(element);
+                          setSelectedChat(element.uuid);
                         }}
                       >
-                        {element}
+                        {element.summary}
                       </a>
                     </li>
                   ))}
