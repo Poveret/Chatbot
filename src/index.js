@@ -80,7 +80,7 @@ mongoose
           console.log(`Nuevo usuario: "${newUser.username}"`);
         })
         .catch((err) => {
-          console.log("Error guardando: " + err);
+          console.error("Error guardando: " + err);
         });
 
       res.json({ session_token: token });
@@ -112,12 +112,53 @@ mongoose
       user.session_token = token;
 
       user.save().catch((err) => {
-        console.log("Error actualizando token de usuario: " + err);
+        console.error("Error actualizando token de usuario: " + err);
       });
 
       const chats = await Chat.find({ user: user._id });
 
       res.json({ session_token: token, chats: chats.map((x) => x.uuid) });
+    });
+
+    app.put("/api/user", async (req, res) => {
+      const { user_session } = req.body;
+
+      if (!user_session) {
+        res.json({ error: "Error" });
+      } else {
+        try {
+          const user = await User.findOne({
+            session_token: user_session,
+          });
+
+          if (!user) {
+            res.json({ error: "Error usuario no reconocido" });
+            return;
+          }
+
+          let { weight, height, imc } = req.body;
+
+          if (!weight || !height || !imc) {
+            res.json({ error: "Datos incompletos" });
+            return;
+          }
+
+          user.weight = weight;
+          user.height = height;
+          user.imc = imc;
+
+          user
+            .save()
+            .then(() => {
+              res.json({ message: "Guardado" });
+            })
+            .catch((err) => {
+              res.json({ error: "Error" });
+            });
+        } catch {
+          res.json({ error: "Error" });
+        }
+      }
     });
 
     app.post("/api/islogged", authenticateToken, (req, res) => {
@@ -138,6 +179,7 @@ mongoose
 
           if (!user) {
             res.json({ error: "Error usuario no reconocido" });
+            return;
           }
 
           let chat;
@@ -150,6 +192,50 @@ mongoose
               user: user._id,
               messages: [],
             });
+
+            const prompt =
+              "Desarrolla una IA que actúe como nutricionista virtual y proporcione planes de alimentación personalizados a los usuarios. " +
+              "La IA debe ser capaz de recopilar información sobre la edad, el género, la altura, el peso, el nivel de actividad física " +
+              "y los objetivos de cada usuario. A partir de esta información, la IA debe ser capaz de calcular las necesidades calóricas diarias de cada usuario " +
+              "y diseñar un plan de alimentación equilibrado que incluya los nutrientes necesarios para alcanzar sus objetivos. " +
+              "La IA debe ser capaz de proporcionar opciones de alimentos saludables y sugerencias de recetas para cada comida del día, " +
+              "así como adaptar el plan de alimentación a las preferencias alimentarias y restricciones dietéticas de cada usuario. " +
+              "Además, la IA debe ser capaz de realizar un seguimiento del progreso de cada usuario y ajustar el plan de alimentación según sea necesario " +
+              "para garantizar que se alcancen los objetivos de manera segura y efectiva." +
+              "Si das una receta, pon al lado de cada ingrediente las calorías que corresponden." +
+              (user.imc ? `Mi índice de masa corporal es de ${user.imc}` : "");
+
+            const firstPrompt = new Promise((resolve, reject) =>
+              request(
+                {
+                  method: "POST",
+                  url: process.env.URL_AI,
+                  headers: {
+                    "Content-Type": "application/json",
+                    "X-API-KEY": process.env.API_KEY,
+                  },
+                  body: {
+                    model: "gpt-35-turbo-0301",
+                    uuid,
+                    message: { role: "user", content: prompt },
+                    index: "",
+                    type: "",
+                    temperature: 0,
+                    origin: "escueladata",
+                    plugin_id: "",
+                    prompt_externo: "",
+                    tokens: 3000,
+                    folder: "root",
+                  },
+                  json: true,
+                },
+                (error, response, body) => {
+                  resolve();
+                }
+              )
+            );
+
+            await firstPrompt;
           } else {
             chat = await Chat.findOne({
               uuid,
@@ -228,6 +314,26 @@ mongoose
       });
 
       res.json({ chats: chats.map((x) => x.uuid) });
+    });
+
+    app.post("/api/user", async (req, res) => {
+      const { user_session } = req.body;
+
+      if (!user_session) {
+        res.json({ error: "No hay sesión de usuario" });
+        return;
+      }
+
+      const user = await User.findOne({
+        session_token: user_session,
+      });
+
+      if (!user) {
+        res.json({ error: "Error al cargar el usuario" });
+        return;
+      }
+
+      res.json({ weight: user.weight, height: user.height });
     });
 
     app.post("/api/getChat/:uuid", async (req, res) => {

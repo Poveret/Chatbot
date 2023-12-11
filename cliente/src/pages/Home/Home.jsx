@@ -9,6 +9,12 @@ import { toast } from "react-toastify";
 import { useCookies } from "react-cookie";
 import parse from "html-react-parser";
 
+const FIRST_MESSAGE =
+  "¡Hola! Soy tu nutricionista virtual. Mi objetivo es ayudarte a alcanzar tus metas de salud y bienestar a través de una alimentación balanceada y personalizada. 😊\n" +
+  "Estoy aquí para crear un plan de alimentación adaptado a ti, teniendo en cuenta tus necesidades, preferencias e índice de masa corporal. ¡Vamos a comenzar el viaje hacia un estilo de vida más saludable juntos!\n" +
+  "Por favor, indícame tus preferencias y la cantidad de calorías que desea consumir, ¡Estaré encantado de hacerte las recetas! " +
+  "Por supuesto, siéntete libre de comentarme cualquier opinión que tengas acerca de estas";
+
 const Home = () => {
   const [isUserLogged, setIsUserLogged] = useState(0);
   useCheckIfUserLogged(setIsUserLogged);
@@ -64,6 +70,13 @@ const Home = () => {
           setChatMessages([]);
 
           timeoutIdRef.current = setTimeout(async () => {
+            const firstMessageElement = (
+              <div className="chat-message chat-message-initial-state">
+                {FIRST_MESSAGE}
+              </div>
+            );
+            setChatMessages([firstMessageElement]);
+
             const newElements = message.chats.messages.map((message) => (
               <div className="chat-message chat-message-initial-state">
                 {parse(message)}
@@ -86,7 +99,12 @@ const Home = () => {
       }
     } else {
       setChatSelected("");
-      setChatMessages([]);
+      const firstMessageElement = (
+        <div className="chat-message chat-message-initial-state">
+          {FIRST_MESSAGE}
+        </div>
+      );
+      setChatMessages([firstMessageElement]);
     }
   };
 
