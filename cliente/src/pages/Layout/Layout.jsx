@@ -142,7 +142,7 @@ const Layout = () => {
                 </>
               ) : null}
             </ul>
-            {isUserLogged === 1 && window.location.pathname === "/" ? (
+            {isUserLogged === 1 ? (
               <>
                 <p className="menu-label">
                   Conversaciones
