@@ -21,7 +21,7 @@ const Layout = () => {
 
   const [visibleSidebar, setVisibleSidebar] = useState(true);
   const [selectedChat, setSelectedChat] = useState("");
-  const [chatsList, setChatList] = useState([]);
+  const [chatsList, setChatsList] = useState([]);
   const [cookies] = useCookies(["user_session"]);
 
   const location = useLocation();
@@ -33,12 +33,16 @@ const Layout = () => {
       setSelectedChat(event.setChat);
     }
 
-    setChatList((prevChatsList) => {
-      if (newChat.length === 1 && !prevChatsList.includes(newChat[0].uuid)) {
+    console.log(chatsList);
+    setChatsList((prevChatsList) => {
+      if (
+        newChat.length === 1 &&
+        !prevChatsList.some((chat) => chat.uuid === newChat[0].uuid)
+      ) {
         return [...prevChatsList, ...newChat];
       } else if (
         newChat.length === 1 &&
-        prevChatsList.includes(newChat[0].uuid)
+        prevChatsList.some((chat) => chat.uuid === newChat[0].uuid)
       ) {
         return [...prevChatsList];
       } else {
@@ -194,7 +198,7 @@ const Layout = () => {
                             window.dispatchEvent(event);
                             setSelectedChat("");
 
-                            setChatList((prevChatsList) => {
+                            setChatsList((prevChatsList) => {
                               return prevChatsList.filter(
                                 (chat) => chat.uuid !== selectedChat
                               );
