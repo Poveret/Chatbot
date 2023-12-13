@@ -33,7 +33,6 @@ const Layout = () => {
       setSelectedChat(event.setChat);
     }
 
-    console.log(chatsList);
     setChatsList((prevChatsList) => {
       if (
         newChat.length === 1 &&
